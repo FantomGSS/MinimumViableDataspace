@@ -250,3 +250,249 @@ kubectl logs -n traefik deployment/traefik
 * Traefik: `v3.7.5`
 * Java: `OpenJDK 17.0.19`
 * Docker: `29.5.3`
+
+
+
+
+
+# Adding a Second Provider (provider2)
+
+The dataspace can be extended by adding additional participants. In this example, a second provider (`provider2`) was created by cloning the existing provider configuration.
+
+## 1. Clone the Provider Configuration
+
+Copy the existing provider directory:
+
+```bash
+cp -r k8s/provider k8s/provider2
+```
+
+## 2. Update the Root Kustomization
+
+Add the new participant to `k8s/kustomization.yml`:
+
+```yaml
+resources:
+  - common
+  - ./consumer
+  - ./provider
+  - ./provider2
+  - ./issuer
+```
+
+## 3. Rename the Namespace
+
+Update all namespace references:
+
+```yaml
+namespace: provider
+```
+
+to
+
+```yaml
+namespace: provider2
+```
+
+including:
+
+- namespace.yaml
+- gateway.yaml
+- postgres.yaml
+- vault.yaml
+- controlplane.yaml
+- dataplane.yaml
+- identityhub.yaml
+- all seed jobs
+
+## 4. Update Internal Hostnames
+
+Replace all references from:
+
+```text
+provider.svc.cluster.local
+```
+
+to
+
+```text
+provider2.svc.cluster.local
+```
+
+Examples:
+
+```yaml
+edc.hostname: identityhub.provider2.svc.cluster.local
+
+edc.hostname: controlplane.provider2.svc.cluster.local
+
+jdbc:postgresql://postgres.provider2.svc.cluster.local:5432/controlplane
+
+http://vault.provider2.svc.cluster.local:8200
+```
+
+## 5. Create a New Participant Identity
+
+Update the participant DID from:
+
+```text
+did:web:identityhub.provider.svc.cluster.local%3A7083:provider
+```
+
+to:
+
+```text
+did:web:identityhub.provider2.svc.cluster.local%3A7083:provider2
+```
+
+### Update All Participant-Specific Identifiers
+
+When cloning an existing participant, all participant-specific identifiers must be updated to ensure that the new participant is treated as an independent entity within the dataspace.
+
+Examples:
+
+```text
+provider-participant
+→
+provider2-participant
+
+provider-dsp
+→
+provider2-dsp
+
+provider-credentialservice-1
+→
+provider2-credentialservice-1
+
+provider-participant-sts-client-secret
+→
+provider2-participant-sts-client-secret
+```
+
+In general, any identifier that represents the participant's identity, credentials, services, or secrets should be renamed accordingly.
+
+This includes, but is not limited to:
+
+- Participant DIDs
+- Participant IDs
+- STS client identifiers
+- Secret aliases
+- Credential service identifiers
+- DSP identifiers
+- IdentityHub participant references
+- Seed configuration entries
+
+> **Note:** Infrastructure-related names (e.g. service names, database names, or shared platform components) should only be changed when they are intended to be participant-specific.
+
+Failing to update participant-specific identifiers may cause multiple participants to share the same logical identity, credentials, or secret references, resulting in authentication and authorization issues within the dataspace.
+
+## 6. Update External Routes
+
+Update HTTPRoute hostnames:
+
+```text
+vault.provider.localhost
+```
+
+→
+
+```text
+vault.provider2.localhost
+```
+
+and similarly for:
+
+```text
+cp.provider.localhost
+ih.provider.localhost
+dp.provider.localhost
+```
+
+## 7. Deploy
+
+Apply the updated manifests:
+
+```bash
+kubectl apply -k k8s
+```
+
+## 8. Verify Deployment
+
+Verify all Provider2 components are running:
+
+```bash
+kubectl get pods -n provider2
+```
+
+Expected components:
+
+- ControlPlane
+- DataPlane
+- IdentityHub
+- PostgreSQL
+- Vault
+
+and corresponding seed/bootstrap jobs.
+
+## 9. Verify Dataplane Registration
+
+```bash
+kubectl exec -it -n provider2 deployment/controlplane -- \
+  sh -c "curl -s http://localhost:8083/api/control/v1/dataplanes"
+```
+
+Expected:
+
+```json
+{
+  "state": "REGISTERED"
+}
+```
+
+## 10. Verify Readiness
+
+ControlPlane:
+
+```bash
+kubectl exec -it -n provider2 deployment/controlplane -- \
+  sh -c "curl -s http://localhost:8080/api/check/readiness"
+```
+
+IdentityHub:
+
+```bash
+kubectl exec -it -n provider2 deployment/identityhub -- \
+  sh -c "curl -s http://localhost:7080/api/check/readiness"
+```
+
+Expected:
+
+```json
+{
+  "isSystemHealthy": true
+}
+```
+
+## 11. Verify Participant Identity
+
+```bash
+kubectl get configmap controlplane-config \
+  -n provider2 \
+  -o jsonpath="{.data.edc\.participant\.id}"
+```
+
+Expected:
+
+```text
+did:web:identityhub.provider2.svc.cluster.local%3A7083:provider2
+```
+
+## Result
+
+The dataspace now contains:
+
+- 1 Consumer
+- 2 Providers
+- 1 Issuer
+
+allowing data sharing scenarios involving multiple providers and a single consumer.

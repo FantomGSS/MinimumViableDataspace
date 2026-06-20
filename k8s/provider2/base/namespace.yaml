@@ -11,9 +11,7 @@
 #      Metaform Systems, Inc. - initial API and implementation
 #
 
-resources:
-  - common
-  - ./consumer
-  - ./provider
-  - ./provider2
-  - ./issuer
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: provider2
