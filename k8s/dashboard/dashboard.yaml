@@ -1,0 +1,100 @@
+#
+# Copyright (c) 2026 Metaform Systems, Inc.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  namespace: dashboard
+  labels:
+    app: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: ghcr.io/eclipse-edc/data-dashboard:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: config
+          configMap:
+            name: dashboard-config
+            items:
+              - key: edc-connector-config.json
+                path: edc-connector-config.json
+              - key: app-config.json
+                path: app-config.json
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+  namespace: dashboard
+spec:
+  type: ClusterIP
+  selector:
+    app: dashboard
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+
+---
+# Exposes the dashboard at http://dashboard.localhost via the common Traefik gateway.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: dashboard
+  namespace: dashboard
+spec:
+  parentRefs:
+    - name: common-gateway
+      namespace: mvd-common
+      kind: Gateway
+  hostnames:
+    - dashboard.localhost
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: dashboard
+          port: 8080
+          weight: 1

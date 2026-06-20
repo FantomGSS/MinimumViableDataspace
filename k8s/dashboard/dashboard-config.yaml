@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2026 Metaform Systems, Inc.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-config
+  namespace: dashboard
+data:
+  # Points the dashboard at the consumer and provider management APIs.
+  # managementUrl   – reached by the browser via Traefik (external).
+  # protocolUrl     – reached by the control-plane pod via cluster-internal DNS.
+  edc-connector-config.json: |
+    [
+      {
+        "connectorName": "Consumer (BobCo)",
+        "managementUrl": "http://cp.consumer.localhost/api/mgmt",
+        "defaultUrl": "http://cp.consumer.localhost/api",
+        "protocolUrl": "http://controlplane.consumer.svc.cluster.local:8082/api/dsp/2025-1",
+        "federatedCatalogEnabled": false,
+        "did": "did:web:identityhub.consumer.svc.cluster.local%3A7083:consumer"
+      },
+      {
+        "connectorName": "Provider (Acme Corp)",
+        "managementUrl": "http://cp.provider.localhost/api/mgmt",
+        "defaultUrl": "http://cp.provider.localhost/api",
+        "protocolUrl": "http://controlplane.provider.svc.cluster.local:8082/api/dsp/2025-1",
+        "federatedCatalogEnabled": false,
+        "did": "did:web:identityhub.provider.svc.cluster.local%3A7083:provider"
+      }
+    ]
+
+  app-config.json: |
+    {
+      "appTitle": "MVD Data Dashboard",
+      "healthCheckIntervalSeconds": 30,
+      "initialTheme": "light",
+      "enableUserConfig": false,
+      "menuItems": [
+        { "label": "Assets",               "route": "assets" },
+        { "label": "Policies",             "route": "policies" },
+        { "label": "Contract Definitions", "route": "contract-definitions" },
+        { "label": "Catalog",              "route": "catalog" },
+        { "label": "Contract Agreements",  "route": "contract-agreements" },
+        { "label": "Transfer Processes",   "route": "transfer-processes" }
+      ]
+    }
