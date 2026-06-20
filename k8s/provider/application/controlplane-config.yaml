@@ -67,6 +67,11 @@ data:
   edc.iam.dcp.scopes.manufacturer.value: "org.eclipse.dspace.dcp.vc.type:ManufacturerCredential:read"
   edc.iam.dcp.scopes.manufacturer.prefix-mapping: "ManufacturerCredential"
 
+  edc.iam.dcp.scopes.datasharingagreement.id: "datasharingagreement-scope"
+  edc.iam.dcp.scopes.datasharingagreement.type: "POLICY"
+  edc.iam.dcp.scopes.datasharingagreement.value: "org.eclipse.dspace.dcp.vc.type:DataSharingAgreementCredential:read"
+  edc.iam.dcp.scopes.datasharingagreement.prefix-mapping: "DataSharingAgreementCredential"
+
   # Trusted Issuers
   edc.iam.trusted-issuer.issuer.id: "did:web:issuerservice.issuer.svc.cluster.local%3A10016:issuer"
 
