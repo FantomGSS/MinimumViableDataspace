@@ -7,13 +7,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Contributors:
-#      Metaform Systems, Inc. - initial API and implementation
-#
 
-resources:
-  - common
-  - ./consumer
-  - ./provider
-  - ./issuer
-  - ./dashboard
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dashboard

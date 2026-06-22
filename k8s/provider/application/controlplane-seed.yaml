@@ -111,6 +111,24 @@ spec:
 
               echo "✓ Asset 2 done"
 
+              echo ""
+              echo "================================================"
+              echo "Step 3: Create Asset 3"
+              echo "================================================"
+
+              post "${ASSETS_URL}" "POST" '{
+                  "@context": [
+                    "https://w3id.org/edc/connector/management/v2"
+                  ],
+                  "@id": "asset-3",
+                  "@type": "Asset",
+                  "properties": {
+                    "description": "Production Schedules - requires Membership to view and a DataSharingAgreement to negotiate."
+                  }
+                }'
+
+              echo "✓ Asset 3 done"
+
               echo "================================================"
               echo "Step 1: Create Membership CEL Expression "
               echo "================================================"
@@ -156,6 +174,28 @@ spec:
 
               echo "✓ ManufacturerCredential CEL Expression done"
 
+              echo ""
+              echo "================================================"
+              echo "Step 2c: Create DataSharingAgreementCredential CEL Expression"
+              echo "================================================"
+
+              post "${CEL_URL}" "POST" '{
+                "@context": [
+                  "https://w3id.org/edc/connector/management/v2"
+                ],
+                "@type": "CelExpression",
+                "@id": "datasharingagreement-cel",
+                "leftOperand": "DataSharingAgreementCredential",
+                "description": "Expression for evaluating the data-sharing agreement credential — checks existence only",
+                "scopes": [
+                  "catalog",
+                  "contract.negotiation",
+                  "transfer.process"
+                ],
+                "expression": "ctx.agent.claims.vc.filter(c, c.type.exists(t, t.contains('\''DataSharingAgreementCredential'\''))).exists(c, c.credentialSubject.exists(cs, cs.hasAgreement == true))"
+              }'
+
+              echo "✓ DataSharingAgreementCredential CEL Expression done"
 
               echo ""
               echo "================================================"
@@ -288,7 +328,58 @@ spec:
               }'
 
               echo "✓ sensitive-only-def done"
-              
+
+              echo ""
+              echo "================================================"
+              echo "Step 5c: Create DataSharingAgreement Policy"
+              echo "================================================"
+
+              post "${POLICIES_URL}" "POST" '{
+                "@context": [
+                  "https://w3id.org/edc/connector/management/v2"
+                ],
+                "@type": "PolicyDefinition",
+                "@id": "require-datasharingagreement",
+                "policy": {
+                  "@type": "Set",
+                  "obligation": [
+                    {
+                      "action": "use",
+                      "constraint": {
+                        "leftOperand": "DataSharingAgreementCredential",
+                        "operator": "eq",
+                        "rightOperand": "active"
+                      }
+                    }
+                  ]
+                }
+              }'
+
+              echo "✓ DataSharingAgreement policy done"
+
+              echo ""
+              echo "================================================"
+              echo "Step 7: Create preferred-partner-def"
+              echo "================================================"
+
+              post "${CONTRACTDEFS_URL}" "POST" '{
+                "@context": [
+                  "https://w3id.org/edc/connector/management/v2"
+                ],
+                "@id": "preferred-partner-def",
+                "@type": "ContractDefinition",
+                "accessPolicyId": "require-membership",
+                "contractPolicyId": "require-datasharingagreement",
+                "assetsSelector": {
+                  "@type": "Criterion",
+                  "operandLeft": "https://w3id.org/edc/v0.0.1/ns/id",
+                  "operator": "=",
+                  "operandRight": "asset-3"
+                }
+              }'
+
+              echo "✓ preferred-partner-def done"
+
               echo ""
               echo "================================================"
               echo "Step 3a: Register dataplane with controlplane"
