@@ -322,6 +322,67 @@ spec:
                 }'
 
               echo "✓ CredentialDefinition created"
+
+              echo ""
+              echo "================================================"
+              echo "Step 5: Create DataSharingAgreement AttestationDefinition"
+              echo "================================================"
+
+              echo "Creating DataSharingAgreement AttestationDefinition"
+              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/attestations" \
+                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "attestationType": "membership",
+                  "configuration": {},
+                  "id": "datasharingagreement-attestation-def-1"
+                }'
+
+              echo "✓ DataSharingAgreement AttestationDefinition created"
+
+              echo ""
+              echo "================================================"
+              echo "Step 6: Create DataSharingAgreementCredential CredentialDefinition"
+              echo "================================================"
+
+              echo "Creating DataSharingAgreementCredential CredentialDefinition"
+              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/credentialdefinitions" \
+                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "attestations": ["datasharingagreement-attestation-def-1"],
+                  "credentialType": "DataSharingAgreementCredential",
+                  "id": "datasharingagreement-credential-def",
+                  "jsonSchema": "{}",
+                  "jsonSchemaUrl": "https://example.com/schema/datasharingagreement-credential.json",
+                  "mappings": [
+                    {
+                      "input": "membership",
+                      "output": "credentialSubject.hasAgreement",
+                      "required": true
+                    },
+                    {
+                      "input": "membershipType",
+                      "output": "credentialSubject.agreementType",
+                      "required": true
+                    },
+                    {
+                      "input": "membershipStartDate",
+                      "output": "credentialSubject.since",
+                      "required": true
+                    },
+                    {
+                      "input": "id",
+                      "output": "credentialSubject.id",
+                      "required": true
+                    }
+                  ],
+                  "rules": [],
+                  "format": "vc20-bssl/jwt",
+                  "validity": "604800"
+                }'
+
+              echo "✓ DataSharingAgreementCredential CredentialDefinition created"
               echo ""
               echo "================================================"
               echo "IssuerService seeding completed successfully!"

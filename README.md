@@ -30,6 +30,29 @@ cd MinimumViableDataspace
 git checkout university-project
 ```
 
+## 2.5. (Optional) Build and Load Local Docker Images
+If you are developing locally and the Docker images are not available in the public registry, you must build them from source and load them into the Kind cluster.
+
+**1. Clean and build the Java project:**
+Stop any background Gradle processes and compile the project (skip tests to save time):
+```powershell
+.\gradlew --stop
+.\gradlew clean build -x test
+
+
+$components = @(
+    @{ Name = "controlplane";  Path = "launchers\controlplane\src\main\docker\Dockerfile" },
+    @{ Name = "dataplane";     Path = "launchers\dataplane\src\main\docker\Dockerfile" },
+    @{ Name = "identityhub";   Path = "launchers\identity-hub\src\main\docker\Dockerfile" },
+    @{ Name = "issuerservice"; Path = "launchers\issuerservice\src\main\docker\Dockerfile" }
+)
+
+foreach ($component in $components) {
+    $tag = "ghcr.io/eclipse-dataspace-hub/minimumviabledataspace/$($component.Name):latest"
+    docker build -t $tag -f $component.Path .
+    kind load docker-image $tag --name mvd
+}
+
 ## 3. Create a Kind Cluster
 
 ```bash
