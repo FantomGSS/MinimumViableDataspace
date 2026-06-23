@@ -222,6 +222,11 @@ spec:
                         \"format\": \"VC2_0_JOSE\",
                         \"type\": \"ManufacturerCredential\",
                         \"id\": \"manufacturer-credential-def\"
+                      },
+                      {
+                        \"format\": \"vc20-bssl/jwt\",
+                        \"type\": \"DataSharingAgreementCredential\",
+                        \"id\": \"datasharingagreement-credential-def\"
                     }]
                   }")
               
