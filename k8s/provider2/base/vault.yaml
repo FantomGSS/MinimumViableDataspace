@@ -130,7 +130,7 @@ spec:
               {
                 "role_type": "jwt",
                 "user_claim": "participant_context_id",
-                "bound_issuer": "http://vault.provider.localhost/realms/mvd",
+                "bound_issuer": "http://keycloak.mvd-common.svc.cluster.local:8080/realms/mvd",
                 "bound_claims": {
                   "role": "participant"
                 },
@@ -155,7 +155,7 @@ spec:
               {
                 "role_type": "jwt",
                 "user_claim": "azp",
-                "bound_issuer": "http://vault.provider.localhost/realms/mvd",
+                "bound_issuer": "http://keycloak.mvd-common.svc.cluster.local:8080/realms/mvd",
                 "bound_claims": {
                   "role": "provisioner"
                 },

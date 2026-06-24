@@ -18,7 +18,7 @@ metadata:
   namespace: provider2
 data:
   edc.hostname: "identityhub.provider2.svc.cluster.local"
-  edc.iam.credentia.revocation.mimetype: "application/json"
+  edc.iam.credential.revocation.mimetype: "application/json"
   edc.iam.did.web.use.https: "false"
   edc.ih.iam.publickey.alias: "publickey-alias"
   web.http.port: "7080"

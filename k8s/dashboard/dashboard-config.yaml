@@ -22,16 +22,16 @@ data:
     [
       {
         "connectorName": "Consumer (BobCo)",
-        "managementUrl": "http://cp.consumer.localhost/api/mgmt",
-        "defaultUrl": "http://cp.consumer.localhost/api",
+        "managementUrl": "http://cp.consumer.localhost:8000/api/mgmt",
+        "defaultUrl": "http://cp.consumer.localhost:8000/api",
         "protocolUrl": "http://controlplane.consumer.svc.cluster.local:8082/api/dsp/2025-1",
         "federatedCatalogEnabled": false,
         "did": "did:web:identityhub.consumer.svc.cluster.local%3A7083:consumer"
       },
       {
         "connectorName": "Provider (Acme Corp)",
-        "managementUrl": "http://cp.provider.localhost/api/mgmt",
-        "defaultUrl": "http://cp.provider.localhost/api",
+        "managementUrl": "http://cp.provider.localhost:8000/api/mgmt",
+        "defaultUrl": "http://cp.provider.localhost:8000/api",
         "protocolUrl": "http://controlplane.provider.svc.cluster.local:8082/api/dsp/2025-1",
         "federatedCatalogEnabled": false,
         "did": "did:web:identityhub.provider.svc.cluster.local%3A7083:provider"

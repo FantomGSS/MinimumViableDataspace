@@ -71,6 +71,23 @@ spec:
             - |
               set -e
 
+              # POSTs to an authenticated API endpoint, treating 409 as idempotent success.
+              auth_post() {
+                RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$1" \
+                  -H "Authorization: Bearer $2" \
+                  -H "Content-Type: application/json" \
+                  -d "$3")
+                HTTP_STATUS=$(echo "${RESPONSE}" | tail -n1)
+                BODY=$(echo "${RESPONSE}" | sed '$d')
+                if [ "${HTTP_STATUS}" -eq 409 ]; then
+                  echo "⚠ Already exists (HTTP 409), skipping."
+                elif [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+                  echo "✗ Unexpected HTTP status: ${HTTP_STATUS}"
+                  echo "Response body: ${BODY}"
+                  exit 1
+                fi
+              }
+
               echo "================================================"
               echo "Step 1: Create Vault Access Token (Issuer)"
               echo "================================================"
@@ -220,24 +237,14 @@ spec:
 
               # Create attestation definitions
               echo "Creating Membership AttestationDefinition"
-              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/attestations" \
-                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "attestationType": "membership",
-                  "configuration": {},
-                  "id": "membership-attestation-def-1"
-                }'
-              
+              auth_post "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/attestations" \
+                "${ISSUER_TOKEN}" \
+                '{"attestationType": "membership", "configuration": {}, "id": "membership-attestation-def-1"}'
+
               echo "Creating Manufacturer AttestationDefinition"
-              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/attestations" \
-                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "attestationType": "manufacturer",
-                  "configuration": {},
-                  "id": "manufacturer-attestation-def-1"
-                }'
+              auth_post "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/attestations" \
+                "${ISSUER_TOKEN}" \
+                '{"attestationType": "manufacturer", "configuration": {}, "id": "manufacturer-attestation-def-1"}'
 
               echo "✓ AttestationDefinitions created"
 
@@ -246,80 +253,44 @@ spec:
               echo "Step 4: Create CredentialDefinitions"
               echo "================================================"
 
+              CRED_DEF_URL="http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/credentialdefinitions"
+
               # Create credential definitions
               echo "Creating Membership CredentialDefinition"
-              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/credentialdefinitions" \
-                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "attestations": ["membership-attestation-def-1"],
-                  "credentialType": "MembershipCredential",
-                  "id": "membership-credential-def",
-                  "jsonSchema": "{}",
-                  "jsonSchemaUrl": "https://example.com/schema/membership-credential.json",
-                  "mappings": [
-                    {
-                      "input": "membership",
-                      "output": "credentialSubject.membership",
-                      "required": true
-                    },
-                    {
-                      "input": "membershipType",
-                      "output": "credentialSubject.membershipType",
-                      "required": "true"
-                    },
-                    {
-                      "input": "membershipStartDate",
-                      "output": "credentialSubject.membershipStartDate",
-                      "required": true
-                    },
-                    {
-                      "input": "id",
-                      "output": "credentialSubject.id",
-                      "required": true
-                    }
-                  ],
-                  "rules": [],
-                  "format": "VC2_0_JOSE",
-                  "validity": "604800"
-                }'
-              
+              auth_post "${CRED_DEF_URL}" "${ISSUER_TOKEN}" '{
+                "attestations": ["membership-attestation-def-1"],
+                "credentialType": "MembershipCredential",
+                "id": "membership-credential-def",
+                "jsonSchema": "{}",
+                "jsonSchemaUrl": "https://example.com/schema/membership-credential.json",
+                "mappings": [
+                  {"input": "membership",          "output": "credentialSubject.membership",          "required": true},
+                  {"input": "membershipType",       "output": "credentialSubject.membershipType",       "required": true},
+                  {"input": "membershipStartDate",  "output": "credentialSubject.membershipStartDate",  "required": true},
+                  {"input": "id",                   "output": "credentialSubject.id",                   "required": true}
+                ],
+                "rules": [],
+                "format": "VC2_0_JOSE",
+                "validity": "604800"
+              }'
+
               echo "Creating Manufacturer CredentialDefinition"
-              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/credentialdefinitions" \
-                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "attestations": ["manufacturer-attestation-def-1"],
-                  "credentialType": "ManufacturerCredential",
-                  "id": "manufacturer-credential-def",
-                  "jsonSchema": "{}",
-                  "jsonSchemaUrl": "https://example.com/schema/manufacturer-credential.json",
-                  "mappings": [
-                    {
-                      "input": "contractVersion",
-                      "output": "credentialSubject.contractVersion",
-                      "required": true
-                    },
-                    {
-                      "input": "component_types",
-                      "output": "credentialSubject.part_types",
-                      "required": "true"
-                    },
-                    {
-                      "input": "since",
-                      "output": "credentialSubject.since",
-                      "required": true
-                    },
-                    {
-                      "input": "id",
-                      "output": "credentialSubject.id",
-                      "required": true
-                    }
-                  ],
-                  "rules": [],
-                  "format": "VC2_0_JOSE",
-                  "validity": "604800"
-                }'
+              auth_post "${CRED_DEF_URL}" "${ISSUER_TOKEN}" '{
+                "attestations": ["manufacturer-attestation-def-1"],
+                "credentialType": "ManufacturerCredential",
+                "id": "manufacturer-credential-def",
+                "jsonSchema": "{}",
+                "jsonSchemaUrl": "https://example.com/schema/manufacturer-credential.json",
+                "mappings": [
+                  {"input": "contractVersion",  "output": "credentialSubject.contractVersion",  "required": true},
+                  {"input": "component_types",  "output": "credentialSubject.part_types",        "required": true},
+                  {"input": "since",            "output": "credentialSubject.since",             "required": true},
+                  {"input": "id",               "output": "credentialSubject.id",               "required": true}
+                ],
+                "rules": [],
+                "format": "VC2_0_JOSE",
+                "validity": "604800"
+              }'
 
               echo "✓ CredentialDefinition created"
 
@@ -329,14 +300,9 @@ spec:
               echo "================================================"
 
               echo "Creating DataSharingAgreement AttestationDefinition"
-              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/attestations" \
-                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "attestationType": "membership",
-                  "configuration": {},
-                  "id": "datasharingagreement-attestation-def-1"
-                }'
+              auth_post "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/attestations" \
+                "${ISSUER_TOKEN}" \
+                '{"attestationType": "membership", "configuration": {}, "id": "datasharingagreement-attestation-def-1"}'
 
               echo "✓ DataSharingAgreement AttestationDefinition created"
 
@@ -346,41 +312,22 @@ spec:
               echo "================================================"
 
               echo "Creating DataSharingAgreementCredential CredentialDefinition"
-              curl -sfS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "http://issuerservice.issuer.svc.cluster.local:10013/api/admin/v1alpha/participants/issuer/credentialdefinitions" \
-                -H "Authorization: Bearer ${ISSUER_TOKEN}" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "attestations": ["datasharingagreement-attestation-def-1"],
-                  "credentialType": "DataSharingAgreementCredential",
-                  "id": "datasharingagreement-credential-def",
-                  "jsonSchema": "{}",
-                  "jsonSchemaUrl": "https://example.com/schema/datasharingagreement-credential.json",
-                  "mappings": [
-                    {
-                      "input": "membership",
-                      "output": "credentialSubject.hasAgreement",
-                      "required": true
-                    },
-                    {
-                      "input": "membershipType",
-                      "output": "credentialSubject.agreementType",
-                      "required": true
-                    },
-                    {
-                      "input": "membershipStartDate",
-                      "output": "credentialSubject.since",
-                      "required": true
-                    },
-                    {
-                      "input": "id",
-                      "output": "credentialSubject.id",
-                      "required": true
-                    }
-                  ],
-                  "rules": [],
-                  "format": "VC2_0_JOSE",
-                  "validity": "604800"
-                }'
+              auth_post "${CRED_DEF_URL}" "${ISSUER_TOKEN}" '{
+                "attestations": ["datasharingagreement-attestation-def-1"],
+                "credentialType": "DataSharingAgreementCredential",
+                "id": "datasharingagreement-credential-def",
+                "jsonSchema": "{}",
+                "jsonSchemaUrl": "https://example.com/schema/datasharingagreement-credential.json",
+                "mappings": [
+                  {"input": "membership",         "output": "credentialSubject.hasAgreement",  "required": true},
+                  {"input": "membershipType",      "output": "credentialSubject.agreementType", "required": true},
+                  {"input": "membershipStartDate", "output": "credentialSubject.since",         "required": true},
+                  {"input": "id",                  "output": "credentialSubject.id",            "required": true}
+                ],
+                "rules": [],
+                "format": "VC2_0_JOSE",
+                "validity": "604800"
+              }'
 
               echo "✓ DataSharingAgreementCredential CredentialDefinition created"
               echo ""

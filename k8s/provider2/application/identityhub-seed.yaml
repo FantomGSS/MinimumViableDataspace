@@ -227,7 +227,7 @@ spec:
               
               HTTP_STATUS=$(echo "${RESPONSE}" | tail -n1)
               if [ "${HTTP_STATUS}" -eq 201 ]; then
-                echo "✓ provider participant context created"
+                echo "✓ Credential issuance request submitted"
               else
                 echo "✗ Unexpected HTTP status: ${HTTP_STATUS}"
                 echo "Response body: ${RESPONSE}"

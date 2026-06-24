@@ -124,6 +124,11 @@ spec:
                   "@type": "Asset",
                   "properties": {
                     "description": "Production Schedules - requires Membership to view and a DataSharingAgreement to negotiate."
+                  },
+                  "dataAddress": {
+                    "@type": "DataAddress",
+                    "type": "HttpData",
+                    "baseUrl": "https://jsonplaceholder.typicode.com/todos/3"
                   }
                 }'
 

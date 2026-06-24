@@ -54,8 +54,8 @@ data:
   # to do this properly, we should probably configure the following properties on the ingress route:
   #    proxy_set_header Host $host;
   #    proxy_set_header X-Forwarded-Proto $scheme;
-  edc.iam.oauth2.issuer: "http://keycloak.provider.svc.cluster.local:8080/realms/edcv"
-  edc.iam.oauth2.jwks.url: "http://keycloak.provider.svc.cluster.local:8080/realms/edcv/protocol/openid-connect/certs"
+  edc.iam.oauth2.issuer: "http://keycloak.mvd-common.svc.cluster.local:8080/realms/mvd"
+  edc.iam.oauth2.jwks.url: "http://keycloak.mvd-common.svc.cluster.local:8080/realms/mvd/protocol/openid-connect/certs"
 
   # Default scopes config
   edc.iam.dcp.scopes.membership.id: "membership-scope"
@@ -66,6 +66,11 @@ data:
   edc.iam.dcp.scopes.manufacturer.type: "POLICY"
   edc.iam.dcp.scopes.manufacturer.value: "org.eclipse.dspace.dcp.vc.type:ManufacturerCredential:read"
   edc.iam.dcp.scopes.manufacturer.prefix-mapping: "ManufacturerCredential"
+
+  edc.iam.dcp.scopes.datasharingagreement.id: "datasharingagreement-scope"
+  edc.iam.dcp.scopes.datasharingagreement.type: "POLICY"
+  edc.iam.dcp.scopes.datasharingagreement.value: "org.eclipse.dspace.dcp.vc.type:DataSharingAgreementCredential:read"
+  edc.iam.dcp.scopes.datasharingagreement.prefix-mapping: "DataSharingAgreementCredential"
 
   # Trusted Issuers
   edc.iam.trusted-issuer.issuer.id: "did:web:issuerservice.issuer.svc.cluster.local%3A10016:issuer"
