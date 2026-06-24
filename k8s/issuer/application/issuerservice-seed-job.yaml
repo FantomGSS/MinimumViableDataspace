@@ -378,7 +378,7 @@ spec:
                     }
                   ],
                   "rules": [],
-                  "format": "vc20-bssl/jwt",
+                  "format": "VC2_0_JOSE",
                   "validity": "604800"
                 }'
 
