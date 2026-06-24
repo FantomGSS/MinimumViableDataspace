@@ -14,6 +14,10 @@ headers {
   ~Authorization: {{accessToken}}
 }
 
+vars:pre-request {
+  flowId: f2f0b3f9-7c74-4e60-ba36-360e1ffcedbe
+}
+
 script:post-response {
   test("Status code is >=200 and <300", function () {
       expect(res.getStatus() < 300 && res.getStatus() >= 200).to.be.true
