@@ -15,12 +15,11 @@ body:json {
     "@context": [
       "https://w3id.org/edc/connector/management/v2"
     ],
-    "assetId": "asset-1",
     "@type": "TransferRequest",
-    "counterPartyAddress": "{{PROVIDER_DSP}}",
-    "connectorId": "{{PROVIDER_ID}}",
-    "contractId": "{{CONTRACT_AGREEMENT_ID}}",
-    
+    "assetId": "asset-1",
+    "counterPartyAddress": "{{PROVIDER_DSP2}}",
+    "counterPartyId": "{{PROVIDER_ID2}}",
+    "contractId": "9212d6cd-518c-4a7b-ab57-41822cc3de44",
     "dataDestination": {
       "@type": "DataAddress",
       "type": "HttpProxy"
@@ -28,7 +27,6 @@ body:json {
     "protocol": "dataspace-protocol-http:2025-1",
     "transferType": "HttpData-PULL"
   }
-  
 }
 
 script:pre-request {
